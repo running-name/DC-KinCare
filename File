@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISTRICT OF COLUMBIA CUSTODIAL POWER OF ATTORNEY</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load jsPDF for client-side PDF generation -->
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Styling for the HTML preview area */
+        #document-preview {
+            line-height: 1.6;
+            font-family: 'Times New Roman', serif;
+            font-size: 11pt;
+            background-color: white;
+            padding: 3rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            min-height: 100vh;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        /* Custom styles for the initialing line in the form */
+        .initial-check-label {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .initial-check-label:hover {
+            background-color: #f9fafb;
+        }
+        .initial-check-label input:checked + span {
+            font-weight: 600;
+            color: #1d4ed8;
+        }
+        .initial-check-label input:checked ~ p {
+            font-weight: 500;
+        }
+        /* Responsive layout for the main form and preview */
+        @media (min-width: 1024px) {
+            #main-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-10">
+        <h1 class="text-3xl font-extrabold text-gray-900">DISTRICT OF COLUMBIA CUSTODIAL POWER OF ATTORNEY PURSUANT TO D.C. CODE § 21-2301</h1>
+        <p class="text-lg text-gray-600 mt-2">Fill out the form to generate the legal text for a CPOA.</p>
+        <p class="text-sm text-red-600 mt-1 font-medium">Disclaimer: This is for educational and informational purposes only. Consult a legal professional before execution.</p>
+    </header>
+
+    <div id="main-container" class="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+
+        <!-- Form Panel -->
+        <div class="p-6 bg-white rounded-xl shadow-lg h-fit sticky top-8" id="cpoa-form">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b pb-3">1. Document Details & Parties</h2>
+            
+            <form id="generatorForm">
+
+                <!-- Language Selection -->
+                <fieldset class="mb-6 p-4 border rounded-lg border-red-200">
+                    <legend class="px-2 text-lg font-medium text-red-700">Language Options</legend>
+                    <label for="language" class="block text-sm font-medium text-gray-700 mb-2">Select Document Language:</label>
+                    <select id="language" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
+                        <option value="english">English</option>
+                        <option value="spanish">Spanish</option>
+                    </select>
+                </fieldset>
+                
+                <!-- Parent (Grantor) Info -->
+                <fieldset class="mb-6 p-4 border rounded-lg border-blue-200">
+                    <legend class="px-2 text-lg font-medium text-blue-700">Parent (Grantor)</legend>
+                    <input type="text" id="parentName" placeholder="Full Legal Name of Parent" required class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="parentAddress" placeholder="Full Address" required class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="tel" id="parentPhone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-blue-500 focus:border-blue-500">
+                </fieldset>
+
+                <!-- Attorney-in-Fact (Grantee) Info -->
+                <fieldset class="mb-6 p-4 border rounded-lg border-green-200">
+                    <legend class="px-2 text-lg font-medium text-green-700">Attorney-in-Fact (Grantee)</legend>
+                    <input type="text" id="agentName" placeholder="Full Legal Name of Attorney-in-Fact" required class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-green-500 focus:border-green-500">
+                    <input type="text" id="agentAddress" placeholder="Full Address" required class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-green-500 focus:border-green-500">
+                    <input type="tel" id="agentPhone" placeholder="Phone Number" class="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-green-500 focus:border-green-500">
+                </fieldset>
+                
+                <!-- Child Info -->
+                <fieldset class="mb-6 p-4 border rounded-lg border-purple-200">
+                    <legend class="px-2 text-lg font-medium text-purple-700">Child(ren) Information (Max 6)</legend>
+                    <div id="children-container">
+                        <!-- Child 1 -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 1 Name" required class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" required class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <!-- Child 2 (Optional) -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 2 Name (Optional)" class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <!-- Child 3 (Optional) -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 3 Name (Optional)" class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <!-- Child 4 (Optional) -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 4 Name (Optional)" class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <!-- Child 5 (Optional) -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 5 Name (Optional)" class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <!-- Child 6 (Optional) -->
+                        <div class="flex space-x-2 mb-3">
+                            <input type="text" name="childName" placeholder="Child 6 Name (Optional)" class="w-3/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <input type="date" name="childDOB" class="w-2/5 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Dates -->
+                <fieldset class="mb-8 p-4 border rounded-lg border-yellow-200">
+                    <legend class="px-2 text-lg font-medium text-yellow-700">Effective and Expiration Dates</legend>
+                    <div class="flex space-x-4">
+                        <div class="w-1/2">
+                            <label for="effectiveDate" class="block text-sm font-medium text-gray-700">Effective Date</label>
+                            <input type="date" id="effectiveDate" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 mt-1">
+                        </div>
+                        <div class="w-1/2">
+                            <label for="expirationDate" class="block text-sm font-medium text-gray-700">Expiration Date</label>
+                            <input type="date" id="expirationDate" required class="w-full p-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 mt-1">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">CPOAs typically have a maximum duration (e.g., 6 or 12 months, depending on state law).</p>
+                </fieldset>
+
+
+                <!-- Granted Powers -->
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b pb-3">2. Granted Powers (Initial to Select)</h2>
+                <div class="space-y-3 mb-8">
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="custody" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">P.C.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Physical Custody and Control of the Child(ren).</p>
+                    </label>
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="school" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">S.E.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Authority to enroll the child(ren) in school and make educational decisions.</p>
+                    </label>
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="records" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">R.A.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Authority to obtain educational, medical, mental health, and dental records.</p>
+                    </label>
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="treatment" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">M.C.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Authority to consent to medical, mental health, or dental treatment.</p>
+                    </label>
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="travel" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">I.T.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Authority to consent to domestic or international travel.</p>
+                    </label>
+                    <label class="initial-check-label bg-blue-50">
+                        <input type="checkbox" name="powers" value="payee" class="h-5 w-5 text-blue-600 border-gray-300 rounded mr-3">
+                        <span class="font-mono text-gray-500">S.S.</span>
+                        <p class="ml-4 text-gray-800 flex-1">Authority to act as a representative payee for Social Security or receive other benefits.</p>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-xl font-bold hover:bg-indigo-700 transition duration-150 shadow-md">
+                    UPDATE DOCUMENT PREVIEW
+                </button>
+            </form>
+        </div>
+
+        <!-- Document Preview Panel -->
+        <div class="flex flex-col">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b pb-3">Document Preview</h2>
+            <div id="document-preview" class="flex-1">
+                <p class="text-center text-gray-500 italic">Document text will appear here after you update the preview.</p>
+            </div>
+            <div class="mt-4 flex space-x-4">
+                <button onclick="copyDocument()" id="copyButton" class="flex-1 bg-teal-500 text-white p-3 rounded-xl font-bold hover:bg-teal-600 transition duration-150 shadow-md" disabled>
+                    Copy Plain Text
+                </button>
+                <button onclick="downloadPDF()" id="pdfButton" class="flex-1 bg-red-600 text-white p-3 rounded-xl font-bold hover:bg-red-700 transition duration-150 shadow-md" disabled>
+                    Download PDF (Corrected Format)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check for jsPDF module availability
+        const { jsPDF } = window.jspdf;
+        if (typeof jsPDF === 'undefined') {
+            console.error("jsPDF library not loaded. PDF functionality disabled.");
+        }
+
+        document.getElementById('generatorForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            generateDocument();
+        });
+        
+        // --- DATA COLLECTION AND FORMATTING ---
+        
+        function formatDate(dateString) {
+            if (!dateString) return "____, 20__";
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            try {
+                return new Date(dateString + 'T00:00:00').toLocaleDateString('en-US', options);
+            } catch (e) {
+                console.error("Date formatting failed:", e);
+                return "____, 20__";
+            }
+        }
+
+        function collectFormData() {
+            const form = document.getElementById('generatorForm');
+
+            // Collect basic text data
+            const data = {
+                language: form.language.value,
+                parentName: form.parentName.value.trim() || "_________________________",
+                parentAddress: form.parentAddress.value.trim() || "_________________________",
+                parentPhone: form.parentPhone.value.trim() || "_________________________",
+                agentName: form.agentName.value.trim() || "_________________________",
+                agentAddress: form.agentAddress.value.trim() || "_________________________",
+                agentPhone: form.agentPhone.value.trim() || "_________________________",
+                effectiveDate: formatDate(form.effectiveDate.value),
+                expirationDate: formatDate(form.expirationDate.value),
+                dateSigned: formatDate(new Date().toISOString().substring(0, 10)), // Date today
+            };
+
+            // Collect child data (up to 6)
+            data.children = [];
+            const childInputs = document.querySelectorAll('#children-container > div');
+            childInputs.forEach(div => {
+                const nameInput = div.querySelector('input[name="childName"]');
+                const dobInput = div.querySelector('input[name="childDOB"]');
+                // Only include children where both name and DOB are provided
+                if (nameInput.value.trim() && dobInput.value.trim()) {
+                     data.children.push({ name: nameInput.value.trim(), dob: formatDate(dobInput.value) });
+                }
+            });
+
+            if (data.children.length === 0) {
+                 // Add a generic child placeholder if none are entered
+                 data.children.push({ name: "_________________________", dob: "_________________________" });
+            }
+
+            // Collect granted powers
+            data.powers = Array.from(document.querySelectorAll('input[name="powers"]:checked'))
+                .map(input => input.value);
+            
+            return data;
+        }
+
+        // --- DOCUMENT GENERATION LOGIC ---
+        
+        // Storage for the data collected from the form
+        let collectedData = {};
+
+        const POWER_MAP = [
+            // Note: The key is used to check if the power was selected in the form
+            { initial: 'P.C.', key: 'custody', englishKey: 'P5_CUSTODY', spanishKey: 'P5_CUSTODY' },
+            { initial: 'S.E.', key: 'school', englishKey: 'P6_SCHOOL', spanishKey: 'P6_SCHOOL' },
+            { initial: 'R.A.', key: 'records', englishKey: 'P7_RECORDS', spanishKey: 'P7_RECORDS' },
+            { initial: 'M.C.', key: 'treatment', englishKey: 'P8_TREATMENT', spanishKey: 'P8_TREATMENT' },
+            { initial: 'I.T.', key: 'travel', englishKey: 'P9_TRAVEL', spanishKey: 'P9_TRAVEL' },
+            { initial: 'S.S.', key: 'payee', englishKey: 'P10_PAYEE', spanishKey: 'P10_PAYEE' },
+        ];
+
+        // Translation object for all text strings
+        const Translations = {
+            english: {
+                TITLE: "DISTRICT OF COLUMBIA CUSTODIAL POWER OF ATTORNEY PURSUANT TO D.C. CODE § 21-2301",
+                ROLE_PARENT: "Parent/Grantor",
+                ROLE_AGENT: "Attorney-in-Fact/Grantee",
+                CHILD_NAME: "Child's Name",
+                CHILD_DOB: "Date of Birth",
+                INTRO_APPOINTMENT: "I, [PARENT_NAME] ([ROLE_PARENT]), residing at [PARENT_ADDRESS], Phone: [PARENT_PHONE], hereby appoint:",
+                INTRO_AGENT: "[AGENT_NAME] ([ROLE_AGENT]), residing at [AGENT_ADDRESS], Phone: [AGENT_PHONE], as my Attorney-in-Fact.",
+                
+                // New 12 Sections
+                H1_APPOINTMENT: "APPOINTMENT OF ATTORNEY-IN-FACT",
+                P1_APPOINTMENT: "I am the Parent of the minor child(ren) listed in Section 2, and I delegate to the Attorney-in-Fact temporary custody and control over the child(ren) for the purpose of ensuring their safety and welfare.",
+
+                H2_CHILDREN: "CHILDREN COVERED BY POWER OF ATTORNEY",
+                P2_CHILDREN_INTRO: "This Power of Attorney applies to the following minor child(ren):",
+
+                H3_TERM: "EFFECTIVE DATE AND TERMINATION",
+                P3_TERM: "This Power of Attorney shall become effective on [EFFECTIVE_DATE], and shall automatically terminate on [EXPIRATION_DATE] (or upon my earlier written revocation, or upon the death of the Parent or the Attorney-in-Fact).",
+
+                H4_GRANT_INTRO: "GRANT OF AUTHORITY: CHECKLIST",
+                P4_GRANT_INTRO: "I hereby grant the Attorney-in-Fact the following specific parental powers regarding the child(ren) for the duration of this document. The Parent has placed their initials on the line next to each power granted:",
+                
+                // Individual Powers (Sections 5-10)
+                H5_CUSTODY: "POWER: PHYSICAL CUSTODY",
+                P5_CUSTODY: "Physical custody and control of the child(ren).",
+
+                H6_SCHOOL: "POWER: EDUCATIONAL DECISIONS",
+                P6_SCHOOL: "Authority to enroll the child(ren) in school and make school-related decisions, including extracurricular activities.",
+
+                H7_RECORDS: "POWER: RECORDS ACCESS",
+                P7_RECORDS: "Authority to obtain educational, medical, mental health, or dental records.",
+
+                H8_TREATMENT: "POWER: MEDICAL CONSENT",
+                P8_TREATMENT: "Authority to consent to medical, mental health, or dental treatment, including routine, non-routine, and emergency care.",
+
+                H9_TRAVEL: "POWER: INTERNATIONAL TRAVEL CONSENT",
+                P9_TRAVEL: "Authority to consent to domestic or international travel on my behalf.",
+
+                H10_PAYEE: "POWER: SOCIAL SECURITY AND BENEFITS",
+                P10_PAYEE: "Authority to act as a representative payee for Social Security or receive other benefits.",
+                
+                H11_LIMIT: "LIMITATIONS ON AUTHORITY",
+                P11_LIMIT_INTRO: "This Power of Attorney does NOT grant the Attorney-in-Fact the authority to:",
+                L_A: "Consent to the marriage or adoption of the child(ren).",
+                L_B: "Modify or waive my fundamental parental right to determine the child's religious affiliation.",
+                L_C: "Waive my financial obligation to support the child(ren).",
+                L_RESERVATION: "The Parent reserves the right to visit the child(ren) at reasonable times and upon reasonable notice.",
+                
+                H12_CLOSING: "RELIANCE, REVOCATION, AND GOVERNING LAW",
+                P12_RELIANCE: "Any person or entity, including but not limited to, schools, medical professionals, and government agencies, may rely upon the representations of the Attorney-in-Fact as to all matters relating to the scope of authority granted herein. The Parent agrees to indemnify and hold harmless any person or entity who, in good faith, acts in reliance upon this Power of Attorney.",
+                P12_REVOC: "This Power of Attorney may be revoked by the Parent at any time by executing a written document of revocation and delivering it to the Attorney-in-Fact.",
+                P12_GOV_LAW: "This document shall be governed by the laws of the District of Columbia.",
+
+
+                FOOTER: "PAGE 1 OF 2",
+                FOOTER2: "PAGE 2 OF 2",
+                
+                SIGNED: "SIGNED AND DATED this [DATE_SIGNED].",
+                SIGN_PARENT_LINE: "Parent/Grantor",
+                SIGN_AGENT_LINE: "Attorney-in-Fact (Acceptance of Appointment)",
+                NOTARY_TITLE: "NOTARIZATION",
+                NOTARY_STATE: "District of Columbia",
+                NOTARY_COUNTY: "County of",
+                NOTARY_APPEAR: "On this date, [DATE_SIGNED], before me, the undersigned Notary Public, personally appeared [PARENT_NAME] (Parent/Grantor), known to me or satisfactorily proven to be the person whose name is subscribed to the within instrument, and acknowledged that he/she executed the same for the purposes therein contained.",
+                NOTARY_WITNESS: "WITNESS my hand and official seal.",
+                NOTARY_SIGN: "Notary Public Signature",
+                NOTARY_EXPIRE: "My Commission Expires:",
+            },
+            spanish: {
+                TITLE: "PODER NOTARIAL DE CUSTODIA DEL DISTRITO DE COLUMBIA CONFORME AL CÓDIGO DE D.C. § 21-2301",
+                ROLE_PARENT: "Padre/Otorgante",
+                ROLE_AGENT: "Apoderado/Beneficiario",
+                CHILD_NAME: "Nombre del Niño(a)",
+                CHILD_DOB: "Fecha de Nacimiento",
+                INTRO_APPOINTMENT: "Yo, [PARENT_NAME] ([ROLE_PARENT]), residente en [PARENT_ADDRESS], Teléfono: [PARENT_PHONE], por la presente nombro a:",
+                INTRO_AGENT: "[AGENT_NAME] ([ROLE_AGENT]), residente en [AGENT_ADDRESS], Teléfono: [AGENT_PHONE], como mi Apoderado.",
+
+                // New 12 Sections
+                H1_APPOINTMENT: "NOMBRAMIENTO DE APODERADO",
+                P1_APPOINTMENT: "Soy el Padre de el(los) niño(s) menor(es) de edad listado(s) en la Sección 2, y por la presente delego al Apoderado la custodia y control temporal sobre el(los) niño(s) con el propósito de garantizar su seguridad y bienestar.",
+
+                H2_CHILDREN: "NIÑOS CUBIERTOS POR EL PODER NOTARIAL",
+                P2_CHILDREN_INTRO: "Este Poder Notarial aplica a el(los) siguiente(s) niño(s) menor(es) de edad:",
+
+                H3_TERM: "FECHA DE ENTRADA EN VIGOR Y TERMINACIÓN",
+                P3_TERM: "Este Poder Notarial entrará en vigor el [EFFECTIVE_DATE], y terminará automáticamente el [EXPIRATION_DATE] (o tras mi revocación previa por escrito, o tras la muerte del Padre o del Apoderado).",
+
+                H4_GRANT_INTRO: "CONCESIÓN DE AUTORIDAD: LISTA DE VERIFICACIÓN",
+                P4_GRANT_INTRO: "Por la presente, otorgo al Apoderado las siguientes facultades parentales específicas con respecto al(los) niño(s) durante la vigencia de este documento. El Padre ha puesto sus iniciales en la línea junto a cada poder otorgado:",
+                
+                // Individual Powers (Sections 5-10)
+                H5_CUSTODY: "PODER: CUSTODIA FÍSICA",
+                P5_CUSTODY: "Custodia física y control del(los) niño(s).",
+
+                H6_SCHOOL: "PODER: DECISIONES EDUCATIVAS",
+                P6_SCHOOL: "Autoridad para inscribir al(los) niño(s) en la escuela y tomar decisiones relacionadas con la escuela, incluidas las actividades extracurriculares.",
+
+                H7_RECORDS: "PODER: ACCESO A REGISTROS",
+                P7_RECORDS: "Autoridad para obtener registros educativos, médicos, de salud mental o dentales.",
+
+                H8_TREATMENT: "PODER: CONSENTIMIENTO MÉDICO",
+                P8_TREATMENT: "Autoridad para dar consentimiento para tratamiento médico, de salud mental o dental, incluida la atención de rutina, no rutinaria y de emergencia.",
+
+                H9_TRAVEL: "PODER: CONSENTIMIENTO PARA VIAJES INTERNACIONALES",
+                P9_TRAVEL: "Autoridad para dar consentimiento para viajes nacionales o internacionales en mi nombre.",
+
+                H10_PAYEE: "PODER: SEGURO SOCIAL Y BENEFICIOS",
+                P10_PAYEE: "Autoridad para actuar como beneficiario representativo del Seguro Social o recibir otros beneficios.",
+                
+                H11_LIMIT: "LIMITACIONES DE AUTORIDAD",
+                P11_LIMIT_INTRO: "Este Poder Notarial NO otorga al Apoderado la autoridad para:",
+                L_A: "Dar consentimiento para el matrimonio o la adopción del(los) niño(s).",
+                L_B: "Modificar o renunciar a mi derecho fundamental como padre a determinar la afiliación religiosa del niño.",
+                L_C: "Renunciar a mi obligación financiera de manutención del(los) niño(s).",
+                L_RESERVATION: "El Padre se reserva el derecho de visitar al(los) niño(s) en momentos razonables y previo aviso razonable.",
+                
+                H12_CLOSING: "CONFIANZA, REVOCACIÓN Y LEY APLICABLE",
+                P12_RELIANCE: "Cualquier persona o entidad, incluidos, entre otros, escuelas, profesionales médicos y agencias gubernamentales, puede confiar en las representaciones del Apoderado en lo que respecta a todos los asuntos relacionados con el alcance de la autoridad otorgada en este documento. El Padre se compromete a indemnizar y eximir de responsabilidad a cualquier persona o entidad que, de buena fe, actúe basándose en este Poder Notarial.",
+                P12_REVOC: "Este Poder Notarial puede ser revocado por el Padre en cualquier momento mediante la ejecución de un documento de revocación por escrito y su entrega al Apoderado.",
+                P12_GOV_LAW: "Este documento se regirá por las leyes del Distrito de Columbia.",
+
+                FOOTER: "PÁGINA 1 DE 2",
+                FOOTER2: "PÁGINA 2 DE 2",
+                
+                SIGNED: "FIRMADO Y FECHADO este [DATE_SIGNED].",
+                SIGN_PARENT_LINE: "Padre/Otorgante",
+                SIGN_AGENT_LINE: "Apoderado (Aceptación del Nombramiento)",
+                NOTARY_TITLE: "CERTIFICACIÓN NOTARIAL",
+                NOTARY_STATE: "Distrito de Columbia",
+                NOTARY_COUNTY: "Condado de",
+                NOTARY_APPEAR: "En esta fecha, [DATE_SIGNED], ante mí, el Notario Público abajo firmante, compareció personalmente [PARENT_NAME] (Padre/Otorgante), conocido(a) por mí o satisfactoriamente probado(a) ser la persona cuyo nombre está suscrito en el presente instrumento, y reconoció que ejecutó el mismo para los fines contenidos en él.",
+                NOTARY_WITNESS: "DOY FE con mi firma y sello oficial.",
+                NOTARY_SIGN: "Firma del Notario Público",
+                NOTARY_EXPIRE: "Mi Comisión Vence:",
+            }
+        };
+
+        function getDocumentStructure(data, langKey) {
+            const T = Translations[langKey];
+            const isChecked = (power) => data.powers.includes(power) ? "X" : "___";
+            const structure = [];
+
+            // --- HEADER ---
+            structure.push({ type: 'title', text: T.TITLE });
+
+            // 1. APPOINTMENT OF ATTORNEY-IN-FACT
+            structure.push({ type: 'heading', num: '1.', text: T.H1_APPOINTMENT });
+            
+            // Replicate I, [Parent Name]...
+            const introParent = T.INTRO_APPOINTMENT
+                .replace('[PARENT_NAME]', data.parentName)
+                .replace('[ROLE_PARENT]', T.ROLE_PARENT)
+                .replace('[PARENT_ADDRESS]', data.parentAddress)
+                .replace('[PARENT_PHONE]', data.parentPhone);
+            
+            // Replicate [Agent Name]... hereby appoint:
+            const introAgent = T.INTRO_AGENT
+                .replace('[AGENT_NAME]', data.agentName)
+                .replace('[ROLE_AGENT]', T.ROLE_AGENT)
+                .replace('[AGENT_ADDRESS]', data.agentAddress)
+                .replace('[AGENT_PHONE]', data.agentPhone);
+
+            structure.push({ type: 'intro', text: introParent });
+            structure.push({ type: 'intro', text: introAgent });
+            structure.push({ type: 'paragraph', text: T.P1_APPOINTMENT });
+
+
+            // 2. CHILDREN COVERED BY POWER OF ATTORNEY
+            structure.push({ type: 'heading', num: '2.', text: T.H2_CHILDREN });
+            structure.push({ type: 'paragraph', text: T.P2_CHILDREN_INTRO });
+
+            // Children List
+            data.children.forEach(child => {
+                structure.push({ type: 'child-item', text: `${T.CHILD_NAME}: ${child.name}` });
+                structure.push({ type: 'child-item', text: `${T.CHILD_DOB}: ${child.dob}` });
+            });
+            
+            // 3. EFFECTIVE DATE AND TERMINATION
+            structure.push({ type: 'heading', num: '3.', text: T.H3_TERM });
+            const termParagraph = T.P3_TERM
+                .replace('[EFFECTIVE_DATE]', data.effectiveDate)
+                .replace('[EXPIRATION_DATE]', data.expirationDate);
+            structure.push({ type: 'paragraph', text: termParagraph });
+
+            // 4. GRANT OF AUTHORITY: CHECKLIST (The checklist intro)
+            structure.push({ type: 'heading', num: '4.', text: T.H4_GRANT_INTRO });
+            structure.push({ type: 'paragraph', text: T.P4_GRANT_INTRO });
+            
+            // --- INDIVIDUAL POWER SECTIONS (5-10) ---
+            POWER_MAP.forEach((p, index) => {
+                const sectionNum = index + 5;
+                const H_KEY = `H${sectionNum}_${p.key.toUpperCase()}`;
+                const P_KEY = `P${sectionNum}_${p.key.toUpperCase()}`;
+                const P_TEXT_KEY = langKey === 'english' ? p.englishKey : p.spanishKey;
+
+                // 5-10. Individual Powers
+                structure.push({ type: 'heading', num: `${sectionNum}.`, text: T[H_KEY] });
+                structure.push({ 
+                    type: 'power-item', 
+                    initial: p.initial, 
+                    text: T[P_TEXT_KEY], 
+                    checked: isChecked(p.key) 
+                });
+            });
+
+            // 11. LIMITATIONS ON AUTHORITY
+            structure.push({ type: 'heading', num: '11.', text: T.H11_LIMIT });
+            structure.push({ type: 'paragraph', text: T.P11_LIMIT_INTRO.replace('NOT', '<strong>NOT</strong>') });
+            
+            // Limitation list (a, b, c)
+            structure.push({ type: 'list-alpha', text: `a) ${T.L_A}` });
+            structure.push({ type: 'list-alpha', text: `b) ${T.L_B}` });
+            structure.push({ type: 'list-alpha', text: `c) ${T.L_C}` });
+
+            structure.push({ type: 'paragraph-small', text: T.L_RESERVATION });
+
+            // Page 1 Footer
+            structure.push({ type: 'footer', text: T.FOOTER });
+
+            // --- PAGE 2 ---
+            
+            // Force a good spot for page break detection in PDF.
+            structure.push({ type: 'page-break-placeholder' }); 
+
+            // 12. RELIANCE, REVOCATION, AND GOVERNING LAW
+            structure.push({ type: 'heading', num: '12.', text: T.H12_CLOSING });
+            structure.push({ type: 'paragraph-sub', text: T.P12_RELIANCE });
+            structure.push({ type: 'paragraph-sub', text: T.P12_REVOC });
+            structure.push({ type: 'paragraph-sub', text: T.P12_GOV_LAW });
+
+            // SIGNATURES AND ACKNOWLEDGEMENT (Unnumbered section below 12)
+            structure.push({ type: 'notary-separator' });
+            structure.push({ type: 'notary-title', text: T.SIGNED.replace('[DATE_SIGNED]', `<strong>${data.dateSigned}</strong>`) });
+
+            // Signatures
+            structure.push({ type: 'signature-line', name: data.parentName, role: T.SIGN_PARENT_LINE });
+            structure.push({ type: 'signature-line', name: data.agentName, role: T.SIGN_AGENT_LINE });
+            
+            // Notary Block
+            const notaryParagraph = T.NOTARY_APPEAR
+                .replace('[DATE_SIGNED]', `<strong>${data.dateSigned}</strong>`)
+                .replace('[PARENT_NAME]', `<strong>${data.parentName}</strong>`);
+            
+            structure.push({ type: 'notary-separator-small' });
+            structure.push({ type: 'notary-title', text: T.NOTARY_TITLE });
+            structure.push({ type: 'notary-state', text: `${T.NOTARY_STATE} __________________________` });
+            structure.push({ type: 'notary-state', text: `${T.NOTARY_COUNTY} _________________________` });
+            structure.push({ type: 'notary-text', text: notaryParagraph });
+            structure.push({ type: 'notary-witness', text: T.NOTARY_WITNESS });
+            structure.push({ type: 'notary-sign-line', text: T.NOTARY_SIGN });
+            structure.push({ type: 'notary-expire', text: `${T.NOTARY_EXPIRE} _________________` });
+            structure.push({ type: 'notary-seal', text: '(Seal)' });
+            
+            structure.push({ type: 'footer', text: T.FOOTER2 });
+            
+            return structure;
+        }
+
+        function generateDocument() {
+            collectedData = collectFormData();
+            const preview = document.getElementById('document-preview');
+            document.getElementById('copyButton').disabled = false;
+            document.getElementById('pdfButton').disabled = false;
+            
+            let structures = [];
+            const lang = collectedData.language;
+
+            if (lang === 'english') {
+                structures = structures.concat(getDocumentStructure(collectedData, 'english'));
+            } else if (lang === 'spanish') {
+                structures = structures.concat(getDocumentStructure(collectedData, 'spanish'));
+            }
+
+            // Convert Structure to HTML for Preview
+            let htmlContent = '';
+            structures.forEach(item => {
+                switch(item.type) {
+                    case 'title':
+                        htmlContent += `<h1 class="text-center text-xl font-bold mb-6 mt-4">${item.text}</h1>`;
+                        break;
+                    case 'intro':
+                        // Simple text with bolding for names
+                        htmlContent += `<p class="mb-2">${item.text}</p>`;
+                        break;
+                    case 'child-item':
+                        htmlContent += `<p class="ml-8 text-sm">${item.text}</p>`;
+                        break;
+                    case 'heading':
+                        htmlContent += `<h3 class="font-bold mt-4 mb-2">${item.num} ${item.text}</h3>`;
+                        break;
+                    case 'paragraph':
+                        htmlContent += `<p class="mb-3">${item.text}</p>`;
+                        break;
+                    case 'paragraph-sub': // Used for section 12 sub-points
+                        htmlContent += `<p class="mb-3 text-sm ml-4 indent-[-16px]">${item.text}</p>`;
+                        break;
+                    case 'paragraph-small':
+                        htmlContent += `<p class="mb-3 text-sm">${item.text}</p>`;
+                        break;
+                    case 'power-item':
+                        // Recreate the initialed block for the HTML preview
+                        htmlContent += `<div class="flex items-start mb-1 text-sm"><span class="font-mono border border-black px-2 mr-4">${item.checked}</span> <span class="font-mono text-xs text-gray-500 mr-4">${item.initial}.</span> <p class="flex-1">${item.text}</p></div>`;
+                        break;
+                    case 'list-alpha':
+                        htmlContent += `<p class="ml-4 text-sm mb-1">${item.text}</p>`;
+                        break;
+                    case 'signature-intro':
+                        htmlContent += `<p class="text-center mt-6 mb-8">${item.text}</p>`;
+                        break;
+                    case 'signature-line':
+                        htmlContent += `<div class="mt-8 text-center border-t border-black pt-1 mb-12"><p class="text-sm"><strong>${item.name}</strong></p><p class="text-xs">${item.role}</p></div>`;
+                        break;
+                    case 'notary-separator':
+                        htmlContent += `<hr class="my-8 border-t-2 border-dashed border-gray-400">`;
+                        break;
+                    case 'notary-separator-small':
+                         htmlContent += `<hr class="my-4 border-t border-gray-300">`;
+                         break;
+                    case 'notary-title':
+                        htmlContent += `<h4 class="text-center text-lg font-bold mt-8 mb-4">${item.text}</h4>`;
+                        break;
+                    case 'notary-state':
+                        htmlContent += `<p class="text-sm mb-1">${item.text}</p>`;
+                        break;
+                    case 'notary-text':
+                        htmlContent += `<p class="mt-4 mb-3">${item.text}</p>`;
+                        break;
+                    case 'notary-witness':
+                        htmlContent += `<p class="mt-4 mb-8">${item.text}</p>`;
+                        break;
+                    case 'notary-sign-line':
+                        htmlContent += `<div class="mt-8 border-t border-black pt-1 mb-2"><p class="text-sm">${item.text}</p></div>`;
+                        break;
+                    case 'notary-expire':
+                    case 'notary-seal':
+                        htmlContent += `<p class="text-sm mb-1">${item.text}</p>`;
+                        break;
+                    case 'footer':
+                        htmlContent += `<div class="text-center text-xs mt-12 pt-4 border-t border-gray-200">${item.text}</div>`;
+                        break;
+                    case 'page-break-placeholder':
+                        htmlContent += `<div style="height: 100px;"></div>`; // Visual separation in HTML
+                        break;
+                }
+            });
+
+            preview.innerHTML = htmlContent;
+        }
+
+        // --- EXPORT FUNCTIONS (Copy and PDF) ---
+
+        // Function to copy the generated text (re-using existing logic)
+        function copyDocument() {
+            const preview = document.getElementById('document-preview');
+            // Extract text content from the structured HTML for a clean copy
+            const textToCopy = preview.textContent.trim(); 
+            
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                document.execCommand('copy');
+                const copyButton = document.getElementById('copyButton');
+                copyButton.textContent = 'Copied to Clipboard!';
+                copyButton.classList.remove('bg-teal-500', 'hover:bg-teal-600');
+                copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                setTimeout(() => {
+                    copyButton.textContent = 'Copy Plain Text';
+                    copyButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    copyButton.classList.add('bg-teal-500', 'hover:bg-teal-600');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+            document.body.removeChild(tempTextArea);
+        }
+
+        // Function to download the document as a professionally formatted PDF
+        function downloadPDF() {
+            if (typeof jsPDF === 'undefined') {
+                alert("PDF generation error: jsPDF library not found.");
+                return;
+            }
+
+            const doc = new jsPDF('p', 'pt', 'letter');
+            
+            let structures = [];
+            const lang = collectedData.language;
+
+            // Generate structured content for PDF (only one language is selected)
+            if (lang === 'english') {
+                structures = structures.concat(getDocumentStructure(collectedData, 'english'));
+            } else if (lang === 'spanish') {
+                structures = structures.concat(getDocumentStructure(collectedData, 'spanish'));
+            }
+            
+            // PDF Layout Constants (in points)
+            const margin = 72; // 1 inch margin
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const contentWidth = pageWidth - (2 * margin); // 612 - 144 = 468pt
+            const lineHeight = 14; 
+            const largeLineHeight = 24;
+            let currentY = margin;
+            let currentPage = 1;
+
+            // Helper to check for and execute page break
+            const checkPageBreak = (spaceNeeded = lineHeight) => {
+                const bottomMargin = 720; // Approximately 1 inch from the bottom
+                if (currentY + spaceNeeded > bottomMargin) {
+                    doc.addPage();
+                    currentY = margin;
+                    currentPage++;
+                }
+            };
+
+            // Main loop to iterate over structured content
+            structures.forEach(item => {
+                checkPageBreak(item.type === 'title' ? largeLineHeight * 2 : lineHeight);
+
+                switch(item.type) {
+                    case 'title':
+                        doc.setFont('Times', 'bold');
+                        doc.setFontSize(14);
+                        doc.text(item.text, pageWidth / 2, currentY, { align: 'center' });
+                        currentY += largeLineHeight * 2; // Extra space after title
+                        break;
+
+                    case 'intro':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        // The intro text is pre-formatted, we split only by bold placeholder to apply bold font style
+                        const parts = item.text.split(/(\[PARENT_NAME\]|\[AGENT_NAME\]|\[ROLE_PARENT\]|\[ROLE_AGENT\]|\[PARENT_ADDRESS\]|\[AGENT_ADDRESS\]|\[PARENT_PHONE\]|\[AGENT_PHONE\])/); 
+                        let cursorX = margin;
+                        
+                        parts.forEach(part => {
+                            const isBold = part.startsWith(collectedData.parentName) || part.startsWith(collectedData.agentName) || part.startsWith('_________________________') || part.includes('APPOINT');
+                            
+                            // Re-check for bolding on dynamic parts, as the replacement happens in getDocumentStructure
+                            if (part.includes(collectedData.parentName) || part.includes(collectedData.agentName)) {
+                                doc.setFont('Times', 'bold');
+                            } else {
+                                doc.setFont('Times', 'normal');
+                            }
+                            
+                            const partWidth = doc.getTextWidth(part);
+                            
+                            // Check if line wrap is necessary
+                            if (cursorX + partWidth > pageWidth - margin) {
+                                currentY += lineHeight;
+                                checkPageBreak();
+                                cursorX = margin;
+                            }
+                            
+                            doc.text(part, cursorX, currentY);
+                            cursorX += partWidth;
+                        });
+                        currentY += lineHeight;
+                        break;
+                    
+                    case 'child-item':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        doc.text(item.text, margin + 20, currentY);
+                        currentY += lineHeight;
+                        break;
+
+                    case 'heading':
+                        doc.setFont('Times', 'bold');
+                        doc.setFontSize(11);
+                        doc.text(`${item.num} ${item.text}`, margin, currentY);
+                        currentY += lineHeight;
+                        break;
+                    
+                    case 'paragraph':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        let textToWrap = item.text.replace('NOT', 'NOT'); 
+                        const wrappedText = doc.splitTextToSize(textToWrap, contentWidth);
+                        doc.text(wrappedText, margin, currentY);
+                        currentY += wrappedText.length * lineHeight;
+                        currentY += 5; // Small space after paragraph
+                        break;
+                    
+                    case 'paragraph-sub':
+                         doc.setFont('Times', 'normal');
+                         doc.setFontSize(11);
+                         const subTextWrapped = doc.splitTextToSize(item.text, contentWidth - 20); // indent 20 points
+                         doc.text(subTextWrapped, margin + 20, currentY);
+                         currentY += subTextWrapped.length * lineHeight;
+                         currentY += 5; // Small space after paragraph
+                         break;
+
+                    case 'paragraph-small':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(10);
+                        const wrappedSmallText = doc.splitTextToSize(item.text, contentWidth);
+                        doc.text(wrappedSmallText, margin, currentY);
+                        currentY += wrappedSmallText.length * lineHeight;
+                        currentY += 5; // Small space after paragraph
+                        break;
+
+                    case 'power-item':
+                        // Power item: [___] Initial. Text
+                        doc.setFontSize(11);
+                        const initialBoxX = margin;
+                        const initialBoxY = currentY - 8; // Adjust Y for vertical centering
+                        const initialTextX = initialBoxX + 2;
+                        const initialCodeX = initialBoxX + 25; // Where P.C. goes
+                        const powerTextX = initialBoxX + 90; // Start text far right
+                        
+                        // Draw box
+                        doc.rect(initialBoxX, initialBoxY, 15, 10);
+                        // Draw X if checked
+                        if (item.checked === 'X') {
+                            doc.setFont('Times', 'bold');
+                            doc.text(item.checked, initialTextX + 1, currentY);
+                        }
+                        
+                        // Write Initial Code (P.C., S.E., etc.)
+                        doc.setFont('Times', 'normal');
+                        doc.text(`${item.initial}.`, initialCodeX, currentY);
+
+                        // Write Power Description
+                        const wrappedPowerText = doc.splitTextToSize(item.text, contentWidth - 90); // Content - Left offset
+                        doc.text(wrappedPowerText, powerTextX, currentY);
+                        currentY += wrappedPowerText.length * lineHeight;
+                        break;
+
+                    case 'list-alpha':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        // Indent list items
+                        const wrappedListText = doc.splitTextToSize(item.text, contentWidth - 20);
+                        doc.text(wrappedListText, margin + 20, currentY);
+                        currentY += wrappedListText.length * lineHeight;
+                        break;
+                    
+                    case 'notary-separator':
+                        currentY += 20;
+                        break;
+                    case 'notary-separator-small':
+                        currentY += 10;
+                        break;
+
+                    case 'notary-title':
+                        doc.setFont('Times', 'bold');
+                        doc.setFontSize(12);
+                        doc.text(item.text, pageWidth / 2, currentY, { align: 'center' });
+                        currentY += largeLineHeight;
+                        break;
+
+                    case 'signature-line':
+                        currentY += lineHeight * 2; // Space for signature line
+                        doc.line(margin + 50, currentY, pageWidth - margin - 50, currentY); // Draw line
+                        currentY += 15;
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        doc.text(item.name, pageWidth / 2, currentY, { align: 'center' }); // Print name centered
+                        currentY += 10;
+                        doc.setFontSize(9);
+                        doc.text(item.role, pageWidth / 2, currentY, { align: 'center' }); // Print role centered
+                        currentY += largeLineHeight;
+                        break;
+                    
+                    case 'notary-state':
+                    case 'notary-expire':
+                    case 'notary-seal':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        doc.text(item.text, margin, currentY);
+                        currentY += lineHeight;
+                        break;
+
+                    case 'notary-text':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        const notaryTextWrapped = doc.splitTextToSize(item.text.replace(/<.*?>/g, ''), contentWidth); // Remove HTML bold tags for PDF
+                        doc.text(notaryTextWrapped, margin, currentY);
+                        currentY += notaryTextWrapped.length * lineHeight;
+                        currentY += 10;
+                        break;
+                    
+                    case 'notary-witness':
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(11);
+                        doc.text(item.text, margin, currentY);
+                        currentY += lineHeight * 2;
+                        break;
+                    
+                    case 'notary-sign-line':
+                        currentY += lineHeight;
+                        doc.line(margin, currentY, pageWidth / 2, currentY); // Draw line (half width)
+                        currentY += 10;
+                        doc.setFont('Times', 'normal');
+                        doc.setFontSize(9);
+                        doc.text(item.text, margin, currentY);
+                        currentY += largeLineHeight;
+                        break;
+                    
+                    case 'footer':
+                        doc.setFont('Times', 'bold');
+                        doc.setFontSize(9);
+                        doc.text(item.text, pageWidth - margin, doc.internal.pageSize.getHeight() - 40, { align: 'right' });
+                        doc.text(`[${lang.toUpperCase()}]`, margin, doc.internal.pageSize.getHeight() - 40); // Add language footer
+                        currentY += lineHeight;
+                        break;
+
+                    case 'page-break-placeholder':
+                        // Force a page break if we are near the top of the current page.
+                        if (currentY < 360) {
+                            checkPageBreak(720); // If less than halfway down, force break to start Page 2 properly
+                        }
+                        currentY += 10; // Simple spacing when page break isn't forced
+                        break;
+                }
+            });
+            
+            doc.save(`Custodial_POA_${lang}.pdf`);
+
+            // Provide user feedback
+            const pdfButton = document.getElementById('pdfButton');
+            pdfButton.textContent = 'PDF Downloaded!';
+            pdfButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+            pdfButton.classList.add('bg-green-600', 'hover:bg-green-700');
+            
+            setTimeout(() => {
+                pdfButton.textContent = 'Download PDF (Corrected Format)';
+                pdfButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                pdfButton.classList.add('bg-red-600', 'hover:bg-red-700');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
